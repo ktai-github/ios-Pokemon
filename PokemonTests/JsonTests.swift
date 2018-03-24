@@ -10,12 +10,26 @@ import XCTest
 @testable import Pokemon
 
 class JsonTests: XCTestCase {
-    
+  
+  //needed for tests
+  var bundleMain: Bundle!
+  var mockPokemonRequest: PokemonAPIRequest!
+  var pokemonRequest: PokemonAPIRequest!
+  
     override func setUp() {
-        super.setUp()
+      super.setUp()
+      
+      bundleMain = Bundle.main
+      
+      //mock networker with mock API request
+      let mockNetworker = MockNetworker() //NetworkType
+      mockPokemonRequest = PokemonAPIRequest(networker: mockNetworker)
+      
+      //real networker with real API request
+      let networkManager = NetworkManager() //NetworkType
+      pokemonRequest = PokemonAPIRequest(networker: networkManager)
+
         // Put setup code here. This method is called before the invocation of each test method in the class.
-      
-      
     }
     
     override func tearDown() {
@@ -34,29 +48,24 @@ class JsonTests: XCTestCase {
             // Put the code you want to measure the time of here.
         }
     }
-  
+//  test with empty data
   func test_jsonObjectFromData_GivenEmptyData_ShouldThrowAnError() {
-    let pokémonRequest = PokemonAPIRequest(networker: MockNetworker())
-    let data = Data.init([1,2,3])
-    XCTAssertThrowsError(try pokémonRequest.jsonObject(fromData: data))
+    let data = Data()
+    XCTAssertThrowsError(try mockPokemonRequest.jsonObject(fromData: data))
   }
   
+//  test with invalid data
   func test_jsonObjectFromData_GivenInvalidJsonData_ShouldThrowAnError() {
-    let networker = MockNetworker()
-    let pokémonRequest = PokemonAPIRequest(networker: networker)
-    
     let invalidJSON = ""
     let data = invalidJSON.data(using: .utf8)!
-    XCTAssertThrowsError(try pokémonRequest.jsonObject(fromData: data))
+    XCTAssertThrowsError(try mockPokemonRequest.jsonObject(fromData: data))
   }
   
+//  test with valid data
   func test_jsonObjectFromData_GivenJSONObjectData_ShouldReturnJSONObject() {
-    let networker = MockNetworker()
-    let pokémonRequest = PokemonAPIRequest(networker: networker)
-
     let validJSON = "{\"\":\"\"}"
     let data = validJSON.data(using: .utf8)!
-    guard let result = try! pokémonRequest.jsonObject(fromData: data) as? [String: String] else {
+    guard let result = try! mockPokemonRequest.jsonObject(fromData: data) as? [String: String] else {
       XCTFail("Invalid JSON returned")
       return
     }
@@ -65,9 +74,8 @@ class JsonTests: XCTestCase {
     
   }
   
+//  Test the view controller is set as the table view's data source.
   func test_viewControllerIsSetAsTableViewDataSource() {
-    
-    let bundleMain = Bundle.main
     let storyboard = UIStoryboard(name: "Main", bundle: bundleMain)
     let viewController = storyboard.instantiateViewController(withIdentifier: "ViewController") as! ViewController
 
@@ -78,22 +86,20 @@ class JsonTests: XCTestCase {
 
 //    let viewController = UIApplication.shared.windows[0].rootViewController as! ViewController
     
-//    let resutingViewController = viewController.tableView.dataSource as? UIViewController
+    let resutingViewController = viewController.tableView.dataSource as? UIViewController
   
-    let resutingViewController = ViewController()
+//    let resutingViewController = ViewController()
     XCTAssertEqual(resutingViewController, viewController)
   }
   
+//  NEVER FAILS!!
+//  Mock the network requester and test that the table view gets populated from the network request.
   func test_tableViewPopulatedFromNetworkRequest() {
     
-//    var pokemons: [Pokemon] = []
-    let networkManager: NetworkerType = MockNetworker()
-
-    let pokemonAPI = PokemonAPIRequest(networker: networkManager)
     let viewController = UIApplication.shared.windows[0].rootViewController as! ViewController
     XCTAssertNotNil(viewController.view)
     
-    pokemonAPI.getAllPokemons { (pokemons, error) in
+    mockPokemonRequest.getAllPokemons { (pokemons, error) in
       if let error = error {
         print("Error: \(error)")
       }
@@ -107,27 +113,27 @@ class JsonTests: XCTestCase {
       viewController.tableView.reloadData()
       
       let tableRows = viewController.tableView.numberOfRows(inSection: 0)
-      XCTAssertTrue(tableRows > 0)
+      XCTAssertTrue(tableRows < 0)
 
     }
     
   }
   
+//  Test that it calls the networker with the correct URL.
+//  Pass it an endpoint and test that it builds a valid URL.
   func test_buildURLReturnsCorrectURL() {
-//    var pokemons: [Pokemon] = []
     let networkManager: NetworkerType = NetworkManager()
     
     let pokemonAPI = PokemonAPIRequest(networker: networkManager)
     let pokemonURL = pokemonAPI.buildURL(endpoint: "pokemon")
-    XCTAssertEqual(pokemonURL?.absoluteString, "https://pokeapimnjjut.co/api/v2/pokemon")
+    XCTAssertEqual(pokemonURL?.absoluteString, "https://pokeapi.co/api/v2/pokemon")
   }
   
-  func test_pokemonsFromResultsNameValid() {
+//  test valid data
+  func test_pokemonsFromResultsNameAndURLValid() {
     
     let expectation = XCTestExpectation(description: "download pokemons")
-    let networker = NetworkManager()
-    let pokemonAPI = PokemonAPIRequest(networker: networker)
-    pokemonAPI.getAllPokemons { (pokemons, error) in
+    pokemonRequest.getAllPokemons { (pokemons, error) in
 //      if let error = error {
 //        print("Error: \(error)")
 //        XCTFail()
@@ -152,28 +158,84 @@ class JsonTests: XCTestCase {
 //      }
 //    }
   }
+  
+//  test invalid data
+//  Test that it calls the networker with the incorrect URL.
+  func test_pokemonsFromResultsNameAndURLInValid() {
     
-    func test_pokemonsFromResultsUrlValid() {
-      let networker = NetworkManager()
-      //    let pokémonRequest = PokemonAPIRequest(networker: networker)
-      //
-      //    let validJSON = "{\"\":\"\"}"
-      //    let data = validJSON.data(using: .utf8)!
-      let pokemonAPI = PokemonAPIRequest(networker: networker)
-      //    guard let result = try! pokémonRequest.jsonObject(fromData: data) as? [String: String] else {
-      pokemonAPI.getAllPokemons { (pokemons, error) in
-        if let error = error {
-          print("Error: \(error)")
-        }
-        guard let pokemons = pokemons else {
-          print("Error getting pokemon")
-          return
-        }
-
-        XCTAssertEqual(pokemons[0].url, "https://pokeapi.co/api/v2/pokemon/1/")
-        
+    let expectation = XCTestExpectation(description: "download pokemons")
+    pokemonRequest.getAllPokemons { (pokemons, error) in
+      //      if let error = error {
+      //        print("Error: \(error)")
+      //        XCTFail()
+      //      }
+      guard let pokemons = pokemons else {
+        print("Error getting pokemon")
+        XCTFail()
+        return
       }
+      print("Pokemon Name: " + pokemons[0].name)
+      print("Pokemon Name: " + pokemons[0].url)
+      XCTAssertNotEqual(pokemons[0].name, "b")
+      XCTAssertNotEqual(pokemons[0].url, "https:///api/v2/pokemon/1/")
+      
+      expectation.fulfill()
+    }
+    
+    wait(for: [expectation], timeout: 10.0)
+    //    { (error) in
+    //      if let error = error {
+    //        print(error)
+    //      }
+    //    }
   }
+
+  
+  //  NEVER FAILS!!
+  //  Have the mock networker return valid data and test that the getAllPokémons method was successful
+  func test_pokemonsFromMockNetworkerResultsNameAndURLValid() {
+    
+//    let expectation = XCTestExpectation(description: "download pokemons")
+    mockPokemonRequest.getAllPokemons { (pokemons, error) in
+      //      if let error = error {
+      //        print("Error: \(error)")
+      //        XCTFail()
+      //      }
+      guard let pokemons = pokemons else {
+        print("Error getting pokemon")
+        XCTFail()
+        return
+      }
+      print("Pokemon Name: " + pokemons[0].name)
+      print("Pokemon Name: " + pokemons[0].url)
+      XCTAssertEqual(pokemons[0].name, "b")
+      XCTAssertEqual(pokemons[0].url, "https://pokeapi.co/api/v2/pokemon/1/")
+      
+//      expectation.fulfill()
+    }
+    
+//    wait(for: [expectation], timeout: 10.0)
+    //    { (error) in
+    //      if let error = error {
+    //        print(error)
+    //      }
+    //    }
+  }
+//    func test_pokemonsFromResultsUrlValid() {
+//      //    guard let result = try! pokémonRequest.jsonObject(fromData: data) as? [String: String] else {
+//      pokemonRequest.getAllPokemons { (pokemons, error) in
+//        if let error = error {
+//          print("Error: \(error)")
+//        }
+//        guard let pokemons = pokemons else {
+//          print("Error getting pokemon")
+//          return
+//        }
+//
+//        XCTAssertEqual(pokemons[0].url, "https://pokeapi.co/api/v2/pokemon/1/")
+//
+//      }
+//  }
 }
 //    guard let pokemonArray = pokémonRequest.pokemons(fromJSON: data) as [String: String] else {
 //      XCTFail("Invalid JSON returned")
