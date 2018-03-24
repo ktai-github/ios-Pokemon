@@ -9,6 +9,10 @@
 import UIKit
 @testable import Pokemon
 
+enum MockNetworkerError: Swift.Error {
+  case NoFile
+}
+
 class MockNetworker: NetworkerType {
   func requestData(with url: URL, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Swift.Void){
 //    let filepath = Bundle.main.path(forResource: "pokemon", ofType: "json")
@@ -18,6 +22,8 @@ class MockNetworker: NetworkerType {
 //    } catch  {
 //      return
 //    }
+    completionHandler(nil, nil, MockNetworkerError.NoFile)
+
     guard let path = Bundle.main.path(forResource: "pokemon", ofType: "json") else {
       return
     }

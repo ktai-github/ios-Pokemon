@@ -92,14 +92,15 @@ class JsonTests: XCTestCase {
     XCTAssertEqual(resutingViewController, viewController)
   }
   
-//  NEVER FAILS!!
 //  Mock the network requester and test that the table view gets populated from the network request.
   func test_tableViewPopulatedFromNetworkRequest() {
     
+    let expectation = XCTestExpectation(description: "download pokemons")
+
     let viewController = UIApplication.shared.windows[0].rootViewController as! ViewController
     XCTAssertNotNil(viewController.view)
     
-    mockPokemonRequest.getAllPokemons { (pokemons, error) in
+    pokemonRequest.getAllPokemons { (pokemons, error) in
       if let error = error {
         print("Error: \(error)")
       }
@@ -110,13 +111,15 @@ class JsonTests: XCTestCase {
       }
       
       viewController.pokemons = pokemons
-      viewController.tableView.reloadData()
-      
-      let tableRows = viewController.tableView.numberOfRows(inSection: 0)
-      XCTAssertTrue(tableRows < 0)
-
+      expectation.fulfill()
     }
+    wait(for: [expectation], timeout: 10.0)
     
+    viewController.tableView.reloadData()
+    
+    let tableRows = viewController.tableView.numberOfRows(inSection: 0)
+    XCTAssertTrue(tableRows > 0)
+
   }
   
 //  Test that it calls the networker with the correct URL.
