@@ -37,7 +37,7 @@ class JsonTests: XCTestCase {
   
   func test_jsonObjectFromData_GivenEmptyData_ShouldThrowAnError() {
     let pokémonRequest = PokemonAPIRequest(networker: MockNetworker())
-    let data = Data()
+    let data = Data.init([1,2,3])
     XCTAssertThrowsError(try pokémonRequest.jsonObject(fromData: data))
   }
   
@@ -60,6 +60,7 @@ class JsonTests: XCTestCase {
       XCTFail("Invalid JSON returned")
       return
     }
+    
     XCTAssertEqual(result, ["":""])
     
   }
@@ -77,8 +78,9 @@ class JsonTests: XCTestCase {
 
 //    let viewController = UIApplication.shared.windows[0].rootViewController as! ViewController
     
-    let resutingViewController = viewController.tableView.dataSource as? UIViewController
+//    let resutingViewController = viewController.tableView.dataSource as? UIViewController
   
+    let resutingViewController = ViewController()
     XCTAssertEqual(resutingViewController, viewController)
   }
   
@@ -117,30 +119,38 @@ class JsonTests: XCTestCase {
     
     let pokemonAPI = PokemonAPIRequest(networker: networkManager)
     let pokemonURL = pokemonAPI.buildURL(endpoint: "pokemon")
-    XCTAssertEqual(pokemonURL?.absoluteString, "https://pokeapi.co/api/v2/pokemon")
+    XCTAssertEqual(pokemonURL?.absoluteString, "https://pokeapimnjjut.co/api/v2/pokemon")
   }
   
   func test_pokemonsFromResultsNameValid() {
+    
+    let expectation = XCTestExpectation(description: "download pokemons")
     let networker = NetworkManager()
-//    let pokémonRequest = PokemonAPIRequest(networker: networker)
-//
-//    let validJSON = "{\"\":\"\"}"
-//    let data = validJSON.data(using: .utf8)!
     let pokemonAPI = PokemonAPIRequest(networker: networker)
-//    guard let result = try! pokémonRequest.jsonObject(fromData: data) as? [String: String] else {
     pokemonAPI.getAllPokemons { (pokemons, error) in
-      if let error = error {
-        print("Error: \(error)")
-      }
+//      if let error = error {
+//        print("Error: \(error)")
+//        XCTFail()
+//      }
       guard let pokemons = pokemons else {
         print("Error getting pokemon")
+        XCTFail()
         return
       }
-      
-//      XCTAssertEqual(pokemons[0].name, "ba")
-//      XCTAssertEqual(pokemons[0].url, "https://pokeapi.co/api/v2/pokemon/1/")
+      print("Pokemon Name: " + pokemons[0].name)
+      print("Pokemon Name: " + pokemons[0].url)
+      XCTAssertEqual(pokemons[0].name, "bulbasaur")
+      XCTAssertEqual(pokemons[0].url, "https://pokeapi.co/api/v2/pokemon/1/")
 
+      expectation.fulfill()
     }
+    
+    wait(for: [expectation], timeout: 10.0)
+//    { (error) in
+//      if let error = error {
+//        print(error)
+//      }
+//    }
   }
     
     func test_pokemonsFromResultsUrlValid() {
