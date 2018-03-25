@@ -100,7 +100,7 @@ class JsonTests: XCTestCase {
     let viewController = UIApplication.shared.windows[0].rootViewController as! ViewController
     XCTAssertNotNil(viewController.view)
     
-    pokemonRequest.getAllPokemons { (pokemons, error) in
+    mockPokemonRequest.getAllPokemons { (pokemons, error) in
       if let error = error {
         print("Error: \(error)")
       }
@@ -192,13 +192,11 @@ class JsonTests: XCTestCase {
     //      }
     //    }
   }
-
   
-  //  NEVER FAILS!!
   //  Have the mock networker return valid data and test that the getAllPokémons method was successful
   func test_pokemonsFromMockNetworkerResultsNameAndURLValid() {
     
-//    let expectation = XCTestExpectation(description: "download pokemons")
+    let expectation = XCTestExpectation(description: "download pokemons")
     mockPokemonRequest.getAllPokemons { (pokemons, error) in
       //      if let error = error {
       //        print("Error: \(error)")
@@ -206,18 +204,19 @@ class JsonTests: XCTestCase {
       //      }
       guard let pokemons = pokemons else {
         print("Error getting pokemon")
-        XCTFail()
+//        XCTFail()
         return
       }
       print("Pokemon Name: " + pokemons[0].name)
-      print("Pokemon Name: " + pokemons[0].url)
-      XCTAssertEqual(pokemons[0].name, "b")
+      print("Pokemon URL: " + pokemons[0].url)
+      XCTAssertEqual(pokemons[0].name, "bulbasaur")
       XCTAssertEqual(pokemons[0].url, "https://pokeapi.co/api/v2/pokemon/1/")
       
-//      expectation.fulfill()
+      expectation.fulfill()
+
     }
     
-//    wait(for: [expectation], timeout: 10.0)
+    wait(for: [expectation], timeout: 10.0)
     //    { (error) in
     //      if let error = error {
     //        print(error)
