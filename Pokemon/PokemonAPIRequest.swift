@@ -42,12 +42,21 @@ extension PokemonAPIRequest {
       var result: [Pokemon] = []
       do {
         json = try self.jsonObject(fromData: data, response: urlRequest, error: error)
-        result = try self.pokemons(fromJSON: json)
-      } catch let error {
-        completionHandler(nil, error)
+      } catch (let err) {
+        print("ERROR: cannot convert data to JSON")
+        completionHandler(nil, err)
         return
       }
       
+      do {
+        result = try self.pokemons(fromJSON: json)
+
+      } catch (let err) {
+        print("ERROR: cannot convert json to Pokemon")
+        completionHandler(result, nil)
+      }
+      print("Data successfully serialized")
+      print("Result: \(result.count)")
       completionHandler(result, nil)
     }
   }

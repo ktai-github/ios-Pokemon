@@ -96,29 +96,38 @@ class JsonTests: XCTestCase {
   func test_tableViewPopulatedFromNetworkRequest() {
     
     let expectation = XCTestExpectation(description: "download pokemons")
-
+    
     let viewController = UIApplication.shared.windows[0].rootViewController as! ViewController
     XCTAssertNotNil(viewController.view)
     
     mockPokemonRequest.getAllPokemons { (pokemons, error) in
-      if let error = error {
-        print("Error: \(error)")
+      
+      if error != nil {
+        expectation.fulfill()
+        XCTFail("Test CompletionHandler error != nil")
+        return
       }
       
       guard let pokemons = pokemons else {
         print("Error getting pokemon")
+        
+        expectation.fulfill()
+        XCTFail("Pokemon do not exist")
         return
       }
       
+      print("Response received... populating tableView")
+      
       viewController.pokemons = pokemons
+      viewController.tableView.reloadData()
+      
+      let tableRows = viewController.tableView.numberOfRows(inSection: 0)
       expectation.fulfill()
+      XCTAssertTrue(tableRows > 0)
+      
     }
+    
     wait(for: [expectation], timeout: 10.0)
-    
-    viewController.tableView.reloadData()
-    
-    let tableRows = viewController.tableView.numberOfRows(inSection: 0)
-    XCTAssertTrue(tableRows > 0)
 
   }
   
@@ -202,17 +211,27 @@ class JsonTests: XCTestCase {
       //        print("Error: \(error)")
       //        XCTFail()
       //      }
+      
+      if error != nil {
+        expectation.fulfill()
+        XCTFail("Test CompletionHandler error != nil")
+        return
+      }
+      
       guard let pokemons = pokemons else {
         print("Error getting pokemon")
-//        XCTFail()
+        
+        expectation.fulfill()
+        XCTFail("Pokemon do not exist")
         return
       }
       print("Pokemon Name: " + pokemons[0].name)
       print("Pokemon URL: " + pokemons[0].url)
+
+      expectation.fulfill()
+
       XCTAssertEqual(pokemons[0].name, "bulbasaur")
       XCTAssertEqual(pokemons[0].url, "https://pokeapi.co/api/v2/pokemon/1/")
-      
-      expectation.fulfill()
 
     }
     

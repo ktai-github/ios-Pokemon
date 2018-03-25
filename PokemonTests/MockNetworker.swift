@@ -18,8 +18,18 @@ class MockNetworker: NetworkerType {
     
     let testBundle = Bundle(for: type(of: self))
     let path = testBundle.path(forResource: "pokemon", ofType: "json")
-    let data = try? Data(contentsOf: URL(fileURLWithPath: path!), options: .alwaysMapped)
-    completionHandler(data!, nil, MockNetworkerError.NoFile)
+    var data: Data = Data()
+    
+    do {
+      data = try Data(contentsOf: URL(fileURLWithPath: path!), options: .alwaysMapped)
+      completionHandler(data,nil, nil)
+      
+    } catch (let err) {
+      print("MockNetworker could not read contents of file")
+      completionHandler(nil, nil, err)
+    }
+//      try? Data(contentsOf: URL(fileURLWithPath: path!), options: .alwaysMapped)
+//    completionHandler(data!, nil, MockNetworkerError.NoFile)
 
   }
 
